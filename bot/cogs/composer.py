@@ -26,13 +26,18 @@ class Composer(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         history = await self._fetch_history(interaction.channel)
-        events = notes_from_messages(history)
+        events = notes_from_messages(history, beat=0.55)
         if not events:
             await interaction.followup.send("Nothing melodic to build yet, try chatting a bit more!")
             return
 
         try:
-            buffer, duration = await asyncio.to_thread(render_notes_to_wav, events)
+            buffer, duration = await asyncio.to_thread(
+                render_notes_to_wav,
+                events,
+                20.0,
+                35.0,
+            )
         except Exception as exc:  # pydub can raise many things, keep message friendly
             self.log.exception("Failed to render composition")
             await interaction.followup.send(f"Couldn't render that tune ({exc}).")

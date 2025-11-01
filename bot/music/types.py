@@ -7,6 +7,13 @@ class InstrumentWave(Enum):
     SQUARE = "square"
     SAWTOOTH = "sawtooth"
     TRIANGLE = "triangle"
+    WARM = "warm"
+    BELL = "bell"
+    PULSE = "pulse"
+    GLOW = "glow"
+    HARP = "harp"
+    CELESTA = "celesta"
+    CHOIR = "choir"
 
 
 @dataclass
