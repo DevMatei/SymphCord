@@ -7,8 +7,8 @@ import discord
 
 from .types import InstrumentWave, NoteEvent
 
-MAJOR_SCALE_STEPS: Sequence[int] = (0, 2, 4, 7, 9, 11)  # Lydian-ish for lift
-ROOT_MIDI = 62  # start on D for brighter tonic
+MAJOR_SCALE_STEPS: Sequence[int] = (0, 2, 4, 7, 9, 11)  
+ROOT_MIDI = 62  
 SCALE_MIDI_NOTES: List[int] = [
     ROOT_MIDI + octave * 12 + step
     for octave in range(3)

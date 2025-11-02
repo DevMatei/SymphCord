@@ -12,13 +12,23 @@ from .types import InstrumentWave, NoteEvent
 try:  # optional real-instrument rendering
     import numpy as np
     import pretty_midi
+    try:
+        import fluidsynth  # noqa: F401  # ensure pyfluidsynth is present
+    except ImportError:  # pragma: no cover - optional dependency
+        fluidsynth = None  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency
     np = None  # type: ignore
     pretty_midi = None  # type: ignore
+    fluidsynth = None  # type: ignore
 
 
 _LOG = logging.getLogger("symphcord.synthesis")
 _SOUNDFONT_PATH = os.getenv("SOUNDFONT_PATH")
+
+if _SOUNDFONT_PATH and pretty_midi and np is not None and fluidsynth is None:
+    _LOG.warning(
+        "SOUNDFONT_PATH provided but pyfluidsynth is missing; install it with 'pip install pyfluidsynth'."
+    )
 
 GENERATOR_MAP = {
     InstrumentWave.SINE: Sine,
@@ -203,7 +213,7 @@ def _render_with_soundfont(
     total_duration: float,
     sample_rate: int,
 ) -> Tuple[io.BytesIO, float]:
-    if pretty_midi is None or np is None or not _SOUNDFONT_PATH:
+    if pretty_midi is None or np is None or not _SOUNDFONT_PATH or fluidsynth is None:
         raise RuntimeError("SoundFont rendering is not available.")
 
     pm = pretty_midi.PrettyMIDI(resolution=960)
@@ -226,11 +236,14 @@ def _render_with_soundfont(
             end=max(event.start + event.duration, event.start + 0.15),
         )
         track.notes.append(note)
-
+# hi 
     if not pm.instruments:
         raise RuntimeError("No instruments to render via SoundFont.")
 
-    audio = pm.fluidsynth(fs=_SOUNDFONT_PATH, sample_rate=sample_rate)
+    try:
+        audio = pm.fluidsynth(fs=sample_rate, sf2_path=_SOUNDFONT_PATH)
+    except TypeError:  # pretty_midi versions <0.2.10
+        audio = pm.fluidsynth(sample_rate, _SOUNDFONT_PATH)
     if audio.ndim > 1:
         audio = audio.mean(axis=1)
 
