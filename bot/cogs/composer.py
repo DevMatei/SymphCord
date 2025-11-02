@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from typing import Iterable, List
 
 import discord
@@ -77,6 +78,16 @@ class Composer(commands.Cog):
             value="Learn why the project exists and what inspired it.",
             inline=False,
         )
+        embed.add_field(
+            name="/ping",
+            value="See if the bot is responsive and check the heartbeat latency.",
+            inline=False,
+        )
+        embed.add_field(
+            name="/botinfo",
+            value="Version, uptime, and SoundFont status for this instance.",
+            inline=False,
+        )
         embed.set_footer(text="Need something else? Ping the project maintainers.")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -107,6 +118,32 @@ class Composer(commands.Cog):
             ),
             colour=discord.Colour.gold(),
         )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name="ping", description="Check if SymphCord is alive.")
+    async def ping(self, interaction: discord.Interaction) -> None:
+        latency_ms = self.bot.latency * 1000 if self.bot.latency else 0.0
+        embed = discord.Embed(
+            title="SymphCord Pong!",
+            description="I'm here and listening.",
+            colour=discord.Colour.teal(),
+        )
+        embed.add_field(name="WebSocket latency", value=f"{latency_ms:.1f} ms")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name="botinfo", description="SymphCord version and runtime details.")
+    async def botinfo(self, interaction: discord.Interaction) -> None:
+        uptime = discord.utils.utcnow() - self.bot.start_time if hasattr(self.bot, "start_time") else None
+        uptime_str = f"{uptime.days}d {uptime.seconds // 3600:02}:{(uptime.seconds // 60) % 60:02}:{uptime.seconds % 60:02}" if uptime else "Unknown"
+        soundfont = os.getenv("SOUNDFONT_PATH")
+        embed = discord.Embed(
+            title="SymphCord Info",
+            colour=discord.Colour.purple(),
+        )
+        embed.add_field(name="Version", value=os.getenv("SYMPHCORD_VERSION", "dev-build"), inline=True)
+        embed.add_field(name="Uptime", value=uptime_str, inline=True)
+        embed.add_field(name="SoundFont", value=soundfont if soundfont else "Disabled", inline=False)
+        embed.set_footer(text="Thanks for making SymphCord part of your server.")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def _fetch_history(self, channel: discord.abc.Messageable) -> List[discord.Message]:

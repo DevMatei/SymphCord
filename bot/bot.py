@@ -18,6 +18,7 @@ class SymphCordBot(commands.Bot):
             intents=intents,
             application_id=self._load_application_id(),
         )
+        self.start_time = discord.utils.utcnow()
         self._sync_guild: Optional[int] = self._load_sync_guild()
         self._log = logging.getLogger("symphcord.bot")
 
@@ -41,4 +42,3 @@ class SymphCordBot(commands.Bot):
         else:
             self._log.info("Syncing commands globally (can take up to an hour).")
             await self.tree.sync()
-

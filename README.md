@@ -3,7 +3,7 @@ Discord bot that turns recent channel chatter into a short melodic clip.
 ![bADGE](https://hackatime-badge.hackclub.com/U09Q1BWBCR0/SymphCord)
 ## Features
 - Slash command `/compose` grabs the last 100 channel messages
-- other commands: `/help`, `/creator`, `/purpose` 
+- info commands: `/help`, `/creator`, `/purpose`, `/ping`, `/botinfo`
 - Messages become notes: length → pitch, timestamps → rhythm, author → instrument
 - Generates a 15–30 second WAV file with simple synth voices (pydub oscillators)
 - Optional SoundFont rendering: set `SOUNDFONT_PATH` to a `.sf2` file to get real instruments (piano, pads, choir)
