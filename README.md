@@ -22,6 +22,21 @@ Discord bot that turns recent channel chatter into a short melodic clip.
    python main.py
    ```
 
+## Run with Docker
+1. Build the image:
+   ```bash
+   docker build -t symphcord .
+   ```
+2. Copy `.env.example` to `.env`, set your credentials, and optionally add `SOUNDFONT_PATH=/soundfonts/your.sf2`.
+3. Run the container (mount the SoundFont directory only if you use one):
+   ```bash
+   docker run \
+     --env-file .env \
+     -v "$(pwd)/soundfont:/soundfonts" \
+     symphcord
+   ```
+   Remove the `-v` flag when you do not need an external SoundFont.
+
 ## Environment variables (`.env`)
 ```
 DISCORD_TOKEN=your-bot-token
