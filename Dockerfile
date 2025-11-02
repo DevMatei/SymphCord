@@ -5,10 +5,9 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# System deps for pyfluidsynth / audio backends
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        fluid-synth \
+        fluidsynth \
         libfluidsynth3 \
         libfluidsynth-dev \
         libsndfile1 \
