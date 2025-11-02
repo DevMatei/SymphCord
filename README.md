@@ -1,6 +1,6 @@
 # SymphCord
 Discord bot that turns recent channel chatter into a short melodic clip.
-
+![bADGE](https://hackatime-badge.hackclub.com/U09Q1BWBCR0/SymphCord)
 ## Features
 - Slash command `/compose` grabs the last 100 channel messages
 - other commands: `/help`, `/creator`, `/purpose` 
