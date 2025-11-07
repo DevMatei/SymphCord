@@ -329,10 +329,11 @@ def render_notes_to_wav(
 
     peak_level = output.max_dBFS
     if math.isfinite(peak_level):
-        if peak_level < -1.5:
-            output = output.apply_gain(-1.5 - peak_level)
+        target_level = -1.0
+        if peak_level > target_level:
+            output = output.apply_gain(target_level - peak_level)
     else:
-        output = output.apply_gain(6.0)
+        output = output.apply_gain(-3.0)
 
     buffer = io.BytesIO()
     output.export(buffer, format="wav")

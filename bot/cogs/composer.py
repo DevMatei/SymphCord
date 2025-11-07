@@ -1,7 +1,9 @@
 import asyncio
 import logging
 import os
-from typing import Iterable, List
+import random
+from collections import deque
+from typing import Deque, List
 
 import discord
 from discord import app_commands
@@ -9,6 +11,7 @@ from discord.ext import commands
 
 from bot.music.note_mapper import notes_from_messages
 from bot.music.synthesis import render_notes_to_wav
+from bot.music.types import NoteEvent
 
 
 class Composer(commands.Cog):
@@ -17,44 +20,69 @@ class Composer(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.log = logging.getLogger("symphcord.composer")
+        self._queue: Deque[int] = deque()
+        self._queue_condition = asyncio.Condition()
 
-    @app_commands.command(name="compose", description="Turn the last 100 messages into music.")
-    async def compose(self, interaction: discord.Interaction) -> None:
+    @app_commands.command(name="chat-to-music", description="Turn the last 100 messages into music.")
+    async def chat_to_music(self, interaction: discord.Interaction) -> None:
         if not interaction.channel:
             await interaction.response.send_message("I need a channel to work with.", ephemeral=True)
             return
 
         await interaction.response.defer(thinking=True)
 
-        history = await self._fetch_history(interaction.channel)
-        events = notes_from_messages(history, beat=0.55)
-        if not events:
-            await interaction.followup.send("Nothing melodic to build yet, try chatting a bit more!")
-            return
+        ticket = getattr(interaction, "id", None) or random.getrandbits(32)
+        position = await self._enter_queue(ticket)
+        status_message: discord.Message | None = None
 
         try:
-            buffer, duration = await asyncio.to_thread(
-                render_notes_to_wav,
-                events,
-                20.0,
-                35.0,
+            if position > 1:
+                status_message = await interaction.followup.send(
+                    f"I'm wrapping another mix right now — you're #{position} in line. Hang tight!",
+                    ephemeral=True,
+                )
+
+            history = await self._fetch_history(interaction.channel)
+            events = notes_from_messages(history, beat=0.55)
+            if not events:
+                await interaction.followup.send(
+                    "No melody yet — drop a few more messages and I'll jam again!",
+                    ephemeral=True,
+                )
+                return
+
+            try:
+                buffer, duration = await asyncio.to_thread(
+                    render_notes_to_wav,
+                    events,
+                    20.0,
+                    35.0,
+                )
+            except Exception as exc:  # pydub can raise many things, keep message friendly
+                self.log.exception("Failed to render composition")
+                await interaction.followup.send(f"I hit a snag bouncing that track ({exc}).", ephemeral=True)
+                return
+
+            audio_file = discord.File(buffer, filename="symphcord_chat_mix.wav")
+
+            embed = discord.Embed(
+                title="SymphCord Chat-to-Music",
+                description="Your last 100 messages, remixed into a mini-score.",
+                colour=discord.Colour.blurple(),
             )
-        except Exception as exc:  # pydub can raise many things, keep message friendly
-            self.log.exception("Failed to render composition")
-            await interaction.followup.send(f"Couldn't render that tune ({exc}).")
-            return
+            embed.add_field(name="Notes", value=str(len(events)))
+            embed.add_field(name="Length", value=f"{duration:.1f} seconds")
+            embed.set_footer(text="Rendered with PyDub synths.")
 
-        file = discord.File(buffer, filename="symphcord_composition.wav")
-        embed = discord.Embed(
-            title="SymphCord Composition",
-            description="100 recent messages, one melodic moment.",
-            colour=discord.Colour.blurple(),
-        )
-        embed.add_field(name="Notes", value=str(len(events)))
-        embed.add_field(name="Length", value=f"{duration:.1f} seconds")
-        embed.set_footer(text="Generated with pydub oscillators")
+            if status_message:
+                try:
+                    await status_message.delete()
+                except discord.HTTPException:
+                    pass
 
-        await interaction.followup.send(embed=embed, file=file)
+            await interaction.followup.send(embed=embed, file=audio_file)
+        finally:
+            await self._leave_queue(ticket)
 
     @app_commands.command(name="help", description="Show what SymphCord can do.")
     async def help(self, interaction: discord.Interaction) -> None:
@@ -64,8 +92,8 @@ class Composer(commands.Cog):
             colour=discord.Colour.blurple(),
         )
         embed.add_field(
-            name="/compose",
-            value="Fetch the latest 100 messages and return a 20–35 second composition.",
+            name="/chat-to-music",
+            value="Fetch the latest 100 messages and build a 20–35 second composition.",
             inline=False,
         )
         embed.add_field(
@@ -114,7 +142,7 @@ class Composer(commands.Cog):
             title="Why SymphCord?",
             description=(
                 "idk i made it for a YSWS hackclub project\n"
-                "Drop /compose to hear your server's rhythm!"
+                "Drop /chat-to-music to hear your server's rhythm!"
             ),
             colour=discord.Colour.gold(),
         )
@@ -155,6 +183,29 @@ class Composer(commands.Cog):
             messages.append(message)
         return messages
 
+    async def _enter_queue(self, ticket: int) -> int:
+        async with self._queue_condition:
+            self._queue.append(ticket)
+            position = len(self._queue)
+            while self._queue[0] != ticket:
+                await self._queue_condition.wait()
+            return position
+
+    async def _leave_queue(self, ticket: int) -> None:
+        async with self._queue_condition:
+            try:
+                self._queue.remove(ticket)
+            except ValueError:
+                return
+            self._queue_condition.notify_all()
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Composer(bot))
+
+
+# meow meow meow meow meow
+# meow meow meow meow meow
+# meow meow meow meow meow
+# meow meow meow meow meow
+# meow meow meow meow meow

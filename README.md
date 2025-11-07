@@ -6,7 +6,7 @@ Invite it and test the bot!
 https://discord.com/oauth2/authorize?client_id=1434275357300887673
 
 ## Features
-- Slash command `/compose` grabs the last 100 channel messages
+- Slash command `/chat-to-music` grabs the last 100 channel messages and returns a short piece of music
 - info commands: `/help`, `/creator`, `/purpose`, `/ping`, `/botinfo`
 - Messages become notes: length → pitch, timestamps → rhythm, author → instrument
 - Generates a 15–30 second WAV file with simple synth voices (pydub oscillators)
@@ -52,6 +52,6 @@ SOUNDFONT_PATH=/path/to/your/soundfont.sf2
 ```
 
 ## Usage
-- Drop `/compose` in any text channel the bot can read.
+- Drop `/chat-to-music` in any text channel the bot can read.
 - The bot fetches the latest 100 non-bot messages, blends them into a short track, and replies with an embed plus a downloadable WAV file.
 - Each user's messages use a consistent waveform, so group chats form a little ensemble over time.
