@@ -1,6 +1,6 @@
 # SymphCord
 Discord bot that turns recent channel chatter into a short melodic clip.
-![bADGE](https://hackatime-badge.hackclub.com/U09Q1BWBCR0/SymphCord)
+![BADGE](https://hackatime-badge.hackclub.com/U09Q1BWBCR0/SymphCord)
 
 Invite it and test the bot! 
 https://discord.com/oauth2/authorize?client_id=1434275357300887673
